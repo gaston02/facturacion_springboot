@@ -38,7 +38,7 @@ public class FacturaController {
 
 	@GetMapping("/ver/{id}")
 	public String ver(@PathVariable(value = "id") Long id, Model model, RedirectAttributes redirectAttribute) {
-		Factura factura = clienteService.findFacturaById(id);
+		Factura factura = clienteService.fetchByIdWithClienteWithItemFacturaWithProducto(id);
 		if(factura==null) {
 			redirectAttribute.addFlashAttribute("danger", "La Factura no existe en el sistema");
 			return "redirect:/listar";

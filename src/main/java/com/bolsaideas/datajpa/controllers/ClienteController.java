@@ -55,7 +55,7 @@ public class ClienteController {
 
 	@GetMapping("/ver/{id}")
 	public String ver(@PathVariable(value = "id") Long id, Model model, RedirectAttributes redirectAttributes) {
-		Cliente cliente = clienteService.findOne(id);
+		Cliente cliente = clienteService.fetchByIdWithFacturas(id);
 		if (id > 0) {
 			if (cliente == null) {
 				redirectAttributes.addFlashAttribute("danger",
