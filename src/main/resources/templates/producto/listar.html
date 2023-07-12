@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html xmlns:th="http://wwww.thymeleaf.org">
+<html xmlns:th="http://wwww.thymeleaf.org"
+	xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head th:replace="layaout/layaout :: head"></head>
 <body>
 	<header th:replace="layaout/layaout :: header"></header>
@@ -12,18 +13,20 @@
 						<tr>
 							<th>Nombre</th>
 							<th>Precio</th>
-							<th>Editar Producto</th>
-							<th>Eliminar Producto</th>
+							<th sec:authorize="hasRole('ROLE_ADMIN')">Editar Producto</th>
+							<th sec:authorize="hasRole('ROLE_ADMIN')">Eliminar Producto</th>
 						</tr>
 					</thead>
 					<tbody>
 						<tr th:each="producto: ${productos}">
 							<td th:text="${producto.nombre}"></td>
 							<td th:text="${producto.precio}"></td>
-							<td><a class="btn btn-warning btn-xs"
+							<td sec:authorize="hasRole('ROLE_ADMIN')"><a
+								class="btn btn-warning btn-xs"
 								th:href="@{/producto/form/} + ${producto.id}"
 								th:text="'Editar Producto'"></a></td>
-							<td><a class="btn btn-danger btn-xs"
+							<td sec:authorize="hasRole('ROLE_ADMIN')"><a
+								class="btn btn-danger btn-xs"
 								th:href="@{/producto/eliminar/} + ${producto.id}"
 								th:text="'Eliminar Producto'"></a></td>
 						</tr>

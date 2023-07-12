@@ -5,6 +5,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -27,6 +28,7 @@ import com.bolsaideas.datajpa.models.service.IClienteService;
 import jakarta.validation.Valid;
 
 @Controller
+@Secured("ROLE_ADMIN")
 @RequestMapping("/factura")
 @SessionAttributes("factura")
 public class FacturaController {
@@ -35,7 +37,7 @@ public class FacturaController {
 	private IClienteService clienteService;
 
 	private final Logger logger = LoggerFactory.getLogger(getClass());
-
+	
 	@GetMapping("/ver/{id}")
 	public String ver(@PathVariable(value = "id") Long id, Model model, RedirectAttributes redirectAttribute) {
 		Factura factura = clienteService.fetchByIdWithClienteWithItemFacturaWithProducto(id);
@@ -47,7 +49,7 @@ public class FacturaController {
 		model.addAttribute("factura", factura);
 		return "factura/ver";
 	}
-
+	
 	@GetMapping("/form/{clienteId}")
 	public String crear(@PathVariable(value = "clienteId") Long clienteId, Model model,
 			RedirectAttributes redirectAttribute) {
@@ -62,12 +64,12 @@ public class FacturaController {
 		model.addAttribute("factura", factura);
 		return "factura/form";
 	}
-
+	
 	@GetMapping(value = "/cargar-productos/{term}", produces = "application/json")
 	public @ResponseBody List<Producto> cargarProductos(@PathVariable(value = "term") String term) {
 		return clienteService.findByNombre(term);
 	}
-
+	
 	@PostMapping("/form")
 	public String guardar(@Valid Factura factura, BindingResult bindingResult, Model model,
 			@RequestParam(name = "detalle_id[]", required = false) Long[] detalleId,

@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -29,7 +30,8 @@ public class ProductoController {
 
 	@Autowired
 	IProductoService productoService;
-
+	
+	@Secured("ROLE_USER")
 	@GetMapping("/listar")
 	public String listar(@RequestParam(name = "page", defaultValue = "0") int page, Model model) {
 		Pageable pageRequest = PageRequest.of(page, 4);
@@ -40,7 +42,8 @@ public class ProductoController {
 		model.addAttribute("page", pageRender);
 		return "producto/listar";
 	}
-
+	
+	@Secured("ROLE_ADMIN")
 	@GetMapping("/form")
 	public String crear(Model model) {
 		Producto producto = new Producto();
@@ -48,7 +51,8 @@ public class ProductoController {
 		model.addAttribute("producto", producto);
 		return "producto/form";
 	}
-
+	
+	@Secured("ROLE_ADMIN")
 	@PostMapping("/form")
 	public String guardar(@Valid Producto producto, BindingResult bindingResult, Model model,
 	        RedirectAttributes redirectAttributes, SessionStatus sessionStatus) {
@@ -64,6 +68,7 @@ public class ProductoController {
 		return "redirect:/producto/listar";
 	}
 	
+	@Secured("ROLE_ADMIN")
 	@GetMapping("/form/{id}")
 	public String editar(@PathVariable(value = "id") Long id, Model model, RedirectAttributes redirectAttributes) {
 		Producto producto = null;
@@ -85,11 +90,12 @@ public class ProductoController {
 		return "producto/form";
 	}
 	
+	@Secured("ROLE_ADMIN")
 	@GetMapping("/eliminar/{id}")
 	public String eliminar(@PathVariable(value = "id") Long id, RedirectAttributes redirectAttributes) {
 		if (id > 0) {
 			productoService.delete(id);
-			redirectAttributes.addFlashAttribute("success", "Cliente eliminado con exito");
+			redirectAttributes.addFlashAttribute("success", "Producto eliminado con exito");
 		}
 		return "redirect:/producto/listar";
 	}

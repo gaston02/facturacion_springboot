@@ -2,7 +2,10 @@ package com.bolsaideas.datajpa.controllers;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.util.Collection;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
@@ -10,6 +13,12 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -27,6 +36,7 @@ import com.bolsaideas.datajpa.models.service.IClienteService;
 import com.bolsaideas.datajpa.models.service.IUploadFileService;
 import com.bolsaideas.datajpa.util.paginator.PageRender;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 
 @Controller
@@ -39,6 +49,9 @@ public class ClienteController {
 	@Autowired
 	private IUploadFileService uploadService;
 
+	private final Logger logger = LoggerFactory.getLogger(getClass());
+	
+	@Secured({"ROLE_USER", "ROLE_ADMIN"})
 	@GetMapping("/uploads/{filename:.+}")
 	public ResponseEntity<Resource> verFoto(@PathVariable(value = "filename") String filename) {
 		Resource recurso = null;
@@ -52,7 +65,8 @@ public class ClienteController {
 				.header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + recurso.getFilename() + "\"")
 				.body(recurso);
 	}
-
+	
+	@Secured("ROLE_USER")
 	@GetMapping("/ver/{id}")
 	public String ver(@PathVariable(value = "id") Long id, Model model, RedirectAttributes redirectAttributes) {
 		Cliente cliente = clienteService.fetchByIdWithFacturas(id);
@@ -72,8 +86,21 @@ public class ClienteController {
 		return "ver";
 	}
 
-	@GetMapping("/listar")
-	public String listar(@RequestParam(name = "page", defaultValue = "0") int page, Model model) {
+	@GetMapping({ "/listar", "/" })
+	public String listar(@RequestParam(name = "page", defaultValue = "0") int page, Model model,
+			Authentication authentication, HttpServletRequest request) {
+		if (authentication != null) {
+			logger.info("hola usuario autenticado: ".concat(authentication.getName()));
+		} else {
+			logger.info("authentication es nulo");
+		}
+		if (hasRole("ROLE_ADMIN")) {
+			logger.info("hola ".concat(authentication.getName()).concat(" tienes acceso"));
+		} else {
+			if (authentication != null && authentication.getName() != null) {
+				logger.info("hola ".concat(authentication.getName()).concat(" No tienes acceso"));
+			}
+		}
 		Pageable pageRequest = PageRequest.of(page, 4);
 		Page<Cliente> clientes = clienteService.findAll(pageRequest);
 		PageRender<Cliente> pageRender = new PageRender<>("/listar", clientes);
@@ -82,7 +109,8 @@ public class ClienteController {
 		model.addAttribute("page", pageRender);
 		return "listar";
 	}
-
+	
+	@Secured("ROLE_ADMIN")
 	@GetMapping("/form")
 	public String crear(Model model) {
 		Cliente cliente = new Cliente();
@@ -90,7 +118,8 @@ public class ClienteController {
 		model.addAttribute("cliente", cliente);
 		return "form";
 	}
-
+	
+	@Secured("ROLE_ADMIN")
 	@SuppressWarnings("unused")
 	@PostMapping("/form")
 	public String guardar(@Valid Cliente cliente, BindingResult bindingResult, Model model,
@@ -123,7 +152,8 @@ public class ClienteController {
 		redirectAttributes.addFlashAttribute("success", mensajeFlash);
 		return "redirect:listar";
 	}
-
+	
+	@Secured("ROLE_ADMIN")
 	@GetMapping("/form/{id}")
 	public String editar(@PathVariable(value = "id") Long id, Model model, RedirectAttributes redirectAttributes) {
 		Cliente cliente = null;
@@ -144,19 +174,34 @@ public class ClienteController {
 		model.addAttribute("cliente", cliente);
 		return "form";
 	}
-
+	
+	@Secured("ROLE_ADMIN")
 	@GetMapping("/eliminar/{id}")
 	public String eliminar(@PathVariable(value = "id") Long id, RedirectAttributes redirectAttributes) {
 		if (id > 0) {
 			Cliente cliente = clienteService.findOne(id);
 			clienteService.delete(id);
 			redirectAttributes.addFlashAttribute("success", "Cliente eliminado con exito");
-			if(cliente.getFoto() != null) {
+			if (cliente.getFoto() != null) {
 				if (uploadService.delete(cliente.getFoto())) {
 					redirectAttributes.addFlashAttribute("info", "Foto eliminada con exito: " + cliente.getFoto());
 				}
 			}
 		}
 		return "redirect:/listar";
+	}
+
+	private boolean hasRole(String role) {
+		SecurityContext securityContext = SecurityContextHolder.getContext();
+		if (securityContext == null) {
+			return false;
+		}
+		Authentication authentication = securityContext.getAuthentication();
+		if (authentication == null) {
+			return false;
+		}
+		Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
+
+		return authorities.contains(new SimpleGrantedAuthority(role));
 	}
 }

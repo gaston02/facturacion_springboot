@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html xmlns:th="http://wwww.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org"
+	xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head th:fragment="head">
 <meta charset="UTF-8" />
 <title th:text="${titulo}"></title>
@@ -35,14 +36,30 @@
 							aria-current="page" th:href="@{/listar}">Home</a></li>
 						<li class="nav-item"><a class="nav-link active"
 							aria-current="page" th:href="@{/listar}">Listado de Clientes</a></li>
-						<li class="nav-item"><a class="nav-link active"
+						<li sec:authorize="hasRole('ROLE_USER')" class="nav-item"><a class="nav-link active"
 							aria-current="page" th:href="@{/producto/listar}">Listado de
 								Productos</a></li>
-						<li class="nav-item"><a class="nav-link active"
-							aria-current="page" th:href="@{/form}">Formulario Cliente</a></li>
-						<li class="nav-item"><a class="nav-link active"
+						<li sec:authorize="hasRole('ROLE_ADMIN')" class="nav-item"><a
+							class="nav-link active" aria-current="page" th:href="@{/form}">Formulario
+								Cliente</a></li>
+						<li sec:authorize="hasRole('ROLE_ADMIN')" class="nav-item"><a class="nav-link active"
 							aria-current="page" th:href="@{/producto/form}">Formulario
 								Producto</a></li>
+					</ul>
+					<ul class="navbar-nav navbar-end">
+						<li sec:authorize="!isAuthenticated()"><a
+							class="btn btn-outline-light" th:href="@{/login}">Login</a></li>
+						<li sec:authorize="isAuthenticated()" class="dropdown">
+							<button class="btn btn-outline-light dropdown-toggle"
+								type="button" data-bs-toggle="dropdown" aria-expanded="false">
+								<span sec:authentication="name"></span>
+							</button>
+							<div class="dropdown-menu">
+								<form id="logoutForm" th:action="@{/logout}" method="post">
+									<button class="dropdown-item" type="submit"
+										onclick="document.getElementById('logoutForm').submit();">Logout</button>
+								</form>
+							</div>
 					</ul>
 				</div>
 			</div>
@@ -60,17 +77,22 @@
 	<footer th:fragment="footer" class="container">
 		<hr />
 		<img th:src="@{/images/spring-boot.jpg}" alt="Spring logo" />
+		<p class="mt-3" sec:authorize="isAuthenticated()">
+			Usuario logeado: <span sec:authentication="name"></span> | Rol: <span
+				sec:authentication="principal.authorities"></span>
+		</p>
+
 		<p>
 			Powered by <a href="https://projects.spring.io/spring-boot/">Spring
 				Boot</a> y <a href="http://www.thymeleaf.org">Thymeleaf</a>.
 		</p>
 		<p>
 			Este proyecto fue desarrollado con Spring Boot, Spring MVC, BD MySQL,
-			thymeleaf en la vista, junto con JQueryUI y AJAX, Es un sistema de
-			Facturacion. Para la persistencia y paginacion utilizo JPA. Desarrolle este
-			proyecto con un curso del profesor Andres Guzman.<br /> &copy;
-			Gastón Fuentes Todos los derechos reservados. Términos de uso y
-			privacidad.<br />
+			thymeleaf en la vista, junto con JQueryUI y AJAX. Es un sistema de
+			Facturacion. Para la persistencia y paginacion utilizo JPA y optimizo
+			las querys con JPQL. Desarrolle este proyecto con un curso del
+			profesor Andres Guzman.<br /> &copy; Gastón Fuentes Todos los
+			derechos reservados. Términos de uso y privacidad.<br />
 		</p>
 	</footer>
 </body>
